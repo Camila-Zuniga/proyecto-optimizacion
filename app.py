@@ -16,7 +16,7 @@ num_vars = st.sidebar.number_input("Número de variables", min_value=1, max_valu
 vars_symbols = sp.symbols(f'x1:{num_vars+1}')
 st.sidebar.info(f"Variables habilitadas: {', '.join([str(v) for v in vars_symbols])}")
 
-func_str = st.sidebar.text_input("Función objetivo (ej: `x1**2 + x2**2`)", value="x1**2 + 2*x2**2")
+func_str = st.sidebar.text_input("Función objetivo (ej: x1\\*\\*2 + x2\\*\\*2)", value="x1**2 + 2*x2**2")
 metodo = st.sidebar.selectbox("Método de optimización", ["Gradiente", "Gradiente Conjugado", "Newton"])
 start_str = st.sidebar.text_input("Punto de partida (separado por comas)", value=", ".join(["1.0"] * num_vars))
 
