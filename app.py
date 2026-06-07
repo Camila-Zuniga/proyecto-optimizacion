@@ -284,7 +284,7 @@ if st.sidebar.button("Ejecutar Optimización", use_container_width=True):
                 st.pyplot(fig)
 
         with tab2:
-            st.subheader("Modelamiento Analítico Desarrollado por SymPy")
+            st.subheader("Modelamiento Analítico")
             col_sym1, col_sym2 = st.columns(2)
             with col_sym1:
                 st.markdown("#### Vector Gradiente Analítico ($\\nabla f$)")
