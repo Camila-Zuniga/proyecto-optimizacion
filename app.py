@@ -20,7 +20,15 @@ with st.sidebar.expander("1. Variables y Función Objetivo", expanded=True):
     func_str = st.text_input("Función objetivo", value="x1**2 + 2*x2**2")
 
 with st.sidebar.expander("2. Algoritmo de Optimización", expanded=True):
-    metodo = st.selectbox("Método a ejecutar", ["Gradiente", "Gradiente Conjugado", "Newton"])
+    # AGREGADO: Checkbox opcional para activar la comparativa
+    modo_comparativo = st.checkbox("🔬 Habilitar Modo Comparativo", value=False)
+    
+    if not modo_comparativo:
+        metodo = st.selectbox("Método a ejecutar", ["Gradiente", "Gradiente Conjugado", "Newton"])
+    else:
+        st.caption("*Modo Comparativo Activo: Se evaluarán Gradiente, G. Conjugado y Newton simultáneamente.*")
+        metodo = None # No se necesita uno solo
+        
     start_str = st.text_input("Punto de partida (separado por comas)", value=", ".join(["1.0"] * num_vars))
     max_iter = st.number_input("Iteraciones máximas", min_value=1, max_value=1000, value=100)
     tol = st.number_input("Tolerancia (𝜖)", min_value=1e-7, max_value=1e-1, value=1e-5, format="%.7f")
@@ -70,7 +78,7 @@ except Exception as e:
     st.stop()
 
 # --- NÚCLEO DEL ALGORITMO ---
-def optimizar(metodo, x0, max_iter, tol, c1, c2):
+def optimizar(metodo_elegido, x0, max_iter, tol, c1, c2):
     x = x0.copy()
     historial_error = []
     historial_tabla = []
@@ -94,13 +102,13 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
             criterio = f"Convergencia alcanzada exitosamente (Norma del Gradiente < {tol})."
             break
             
-        if metodo == "Gradiente":
+        if metodo_elegido == "Gradiente":
             d = -g
-        elif metodo == "Gradiente Conjugado" and k > 0:
+        elif metodo_elegido == "Gradiente Conjugado" and k > 0:
             g_anterior = grad(historial_x[-2])
             beta = np.dot(g, g) / (np.dot(g_anterior, g_anterior) + 1e-10)
             d = -g + beta * d
-        elif metodo == "Newton":
+        elif metodo_elegido == "Newton":
             H = hessian(x)
             try:
                 H = (H + H.T) / 2.0
@@ -134,82 +142,160 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
         
     return x, f(x), iteraciones, error_actual, criterio, historial_error, historial_tabla
 
-# --- RENDERIZADO VISUAL CON NUEVA PALETA ---
+# --- RENDERIZADO VISUAL CONDICIONAL ---
 if st.sidebar.button("Ejecutar Optimización", use_container_width=True):
-    x_min, f_min, iters, err_final, criterio, errores, tabla_pasos = optimizar(metodo, x0, max_iter, tol, c1, c2)
     
-    tab1, tab2, tab3 = st.tabs(["Resumen y Convergencia", "Análisis Simbólico", "Historial Paso a Paso"])
-    
-    # --- PESTAÑA 1: RESULTADOS Y GRÁFICO PERSONALIZADO ---
-    with tab1:
-        st.subheader("Análisis de Desempeño y Convergencia")
+    # -------------------------------------------------------------
+    # FLUJO A: MODO COMPARATIVO ACTIVADO
+    # -------------------------------------------------------------
+    if modo_comparativo:
+        lista_metodos = ["Gradiente", "Gradiente Conjugado", "Newton"]
+        resultados_comp = {}
         
-        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-        with col_m1:
-            st.metric(label="Mínimo Encontrado (x*)", value=str(np.round(x_min, 4)))
-        with col_m2:
-            st.metric(label="Evaluación f(x*)", value=f"{f_min:.6f}")
-        with col_m3:
-            st.metric(label="Iteraciones Totales", value=iters)
-        with col_m4:
-            st.metric(label="Error Final (||∇f||)", value=f"{err_final:.2e}")
+        # Ejecutar los 3 métodos secuencialmente
+        for m in lista_metodos:
+            resultados_comp[m] = optimizar(m, x0, max_iter, tol, c1, c2)
             
-        st.info(f"🏁 **Condición de Finalización:** {criterio}")
-        st.markdown("---")
+        tab1, tab2, tab3 = st.tabs(["Comparativa Global", "Análisis Simbólico", "Historiales por Método"])
         
-        # DISEÑO DEL GRÁFICO ADAPTADO A LA PALETA
-        fig, ax = plt.subplots(figsize=(7, 3.8))
-        fig.patch.set_facecolor('#FFFDFE') # Fondo del lienzo exterior
-        ax.set_facecolor('#FFFDFE')       # Fondo del área del gráfico
-        
-        # Línea de error (Color frambuesa acento: #B83B6F)
-        ax.plot(range(1, len(errores) + 1), errores, marker='o', markersize=4, 
-                color='#B83B6F', linewidth=2, label='Historial de Error (||∇f||)')
-        
-        # Línea de Tolerancia (Color ciruela profundo: #611833)
-        ax.axhline(y=tol, color='#611833', linestyle='--', alpha=0.8, 
-                   linewidth=1.5, label=f'Tolerancia ({tol})')
-        
-        # Ajustes de grilla y escala
-        ax.set_yscale('log')
-        ax.grid(True, which="both", linestyle=":", alpha=0.5, color='#B83B6F')
-        
-        # Limpieza de bordes aplicando color de texto oscuro (#2E111D)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_color('#2E111D')
-        ax.spines['bottom'].set_color('#2E111D')
-        ax.tick_params(colors='#2E111D', labelsize=9)
-        
-        # Títulos y etiquetas tipográficas
-        ax.set_xlabel("Iteraciones Realizadas", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
-        ax.set_ylabel("Magnitud del Error (Escala Log)", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
-        ax.set_title("Trayectoria de Descenso hacia el Óptimo", fontsize=11, fontweight='bold', color='#2E111D', pad=12)
-        ax.legend(frameon=False, loc='upper right', fontsize=9, labelcolor='#2E111D')
-        
-        fig.tight_layout()
-        
-        _, col_plot, _ = st.columns([1, 4, 1])
-        with col_plot:
-            st.pyplot(fig)
-
-    # --- PESTAÑA 2: VALOR AGREGADO MATEMÁTICO ---
-    with tab2:
-        st.subheader("Modelamiento Analítico Desarrollado por SymPy")
-        
-        col_sym1, col_sym2 = st.columns(2)
-        with col_sym1:
-            st.markdown("#### Vector Gradiente Analítico ($\\nabla f$)")
-            st.latex(sp.latex(grad_expr))
+        with tab1:
+            st.subheader("Análisis Comparativo de Rendimiento")
+            st.write("Resultados consolidados al evaluar la misma ecuación matemática bajo idéntico punto de inicio:")
             
-        with col_sym2:
-            st.markdown("#### Matriz Hessiana Simbólica ($H$)")
-            st.latex(sp.latex(sp.Matrix(hessian_expr)))
+            # Construir tabla comparativa resumida
+            tabla_resumen = []
+            for m in lista_metodos:
+                x_min, f_min, iters, err_final, criterio, _, _ = resultados_comp[m]
+                tabla_resumen.append({
+                    "Método": m,
+                    "Mínimo Encontrado (x*)": str(np.round(x_min, 4)),
+                    "Evaluación f(x*)": round(f_min, 6),
+                    "Iteraciones": iters,
+                    "Error Final (||∇f||)": f"{err_final:.2e}",
+                    "Resultado": "Convergencia" if "Convergencia" in criterio else "Límite Alcanzado"
+                })
+            st.dataframe(tabla_resumen, use_container_width=True, hide_index=True)
+            st.markdown("---")
+            
+            # Gráfico de Matplotlib Combinado Estilizado
+            fig, ax = plt.subplots(figsize=(7, 3.8))
+            fig.patch.set_facecolor('#FFFDFE')
+            ax.set_facecolor('#FFFDFE')
+            
+            # Colores asignados armónicamente
+            colores_lineas = {
+                "Gradiente": "#B83B6F",          # Frambuesa
+                "Gradiente Conjugado": "#4A7BB0",# Azul Pizarra
+                "Newton": "#8A4F7D"              # Ciruela Medio
+            }
+            
+            # Dibujar la curva de cada método
+            for m in lista_metodos:
+                errores_m = resultados_comp[m][5]
+                ax.plot(range(1, len(errores_m) + 1), errores_m, marker='o', markersize=3,
+                        color=colores_lineas[m], linewidth=1.8, label=f'Ruta {m}')
+                
+            # Línea de tolerancia común
+            ax.axhline(y=tol, color='#611833', linestyle='--', alpha=0.8, 
+                       linewidth=1.5, label=f'Tolerancia ({tol})')
+            
+            ax.set_yscale('log')
+            ax.grid(True, which="both", linestyle=":", alpha=0.4, color='#999999')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#2E111D')
+            ax.spines['bottom'].set_color('#2E111D')
+            ax.tick_params(colors='#2E111D', labelsize=9)
+            
+            ax.set_xlabel("Iteraciones", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
+            ax.set_ylabel("Magnitud del Error (Log)", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
+            ax.set_title("Comparativa de Velocidad de Convergencia", fontsize=11, fontweight='bold', color='#2E111D', pad=12)
+            ax.legend(frameon=False, loc='upper right', fontsize=9, labelcolor='#2E111D')
+            
+            fig.tight_layout()
+            _, col_plot, _ = st.columns([1, 4, 1])
+            with col_plot:
+                st.pyplot(fig)
+                
+        with tab2:
+            st.subheader("Modelamiento Analítico Desarrollado por SymPy")
+            col_sym1, col_sym2 = st.columns(2)
+            with col_sym1:
+                st.markdown("#### Vector Gradiente Analítico ($\\nabla f$)")
+                st.latex(sp.latex(grad_expr))
+            with col_sym2:
+                st.markdown("#### Matriz Hessiana Simbólica ($H$)")
+                st.latex(sp.latex(sp.Matrix(hessian_expr)))
+                
+        with tab3:
+            st.subheader("Bitácoras de Iteración Individuales")
+            st.write("Selecciona el método para expandir su historial de saltos numéricos completo:")
+            for m in lista_metodos:
+                with st.expander(f"Ver tabla detallada de: {m}"):
+                    st.dataframe(resultados_comp[m][6], use_container_width=True)
 
-    # --- PESTAÑA 3: DATA COMPLETA ---
-    with tab3:
-        st.subheader("Bitácora Detallada de Optimización Numérica")
-        st.dataframe(tabla_pasos, use_container_width=True)
+    # -------------------------------------------------------------
+    # FLUJO B: MODO INDIVIDUAL TRADICIONAL
+    # -------------------------------------------------------------
+    else:
+        x_min, f_min, iters, err_final, criterio, errores, tabla_pasos = optimizar(metodo, x0, max_iter, tol, c1, c2)
+        
+        tab1, tab2, tab3 = st.tabs(["Resumen y Convergencia", "Análisis Simbólico", "Historial Paso a Paso"])
+        
+        with tab1:
+            st.subheader(f"Análisis de Desempeño: Método de {metodo}")
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            with col_m1:
+                st.metric(label="Mínimo Encontrado (x*)", value=str(np.round(x_min, 4)))
+            with col_m2:
+                st.metric(label="Evaluación f(x*)", value=f"{f_min:.6f}")
+            with col_m3:
+                st.metric(label="Iteraciones Totales", value=iters)
+            with col_m4:
+                st.metric(label="Error Final (||∇f||)", value=f"{err_final:.2e}")
+                
+            st.info(f"🏁 **Condición de Finalización:** {criterio}")
+            st.markdown("---")
+            
+            fig, ax = plt.subplots(figsize=(7, 3.8))
+            fig.patch.set_facecolor('#FFFDFE')
+            ax.set_facecolor('#FFFDFE')
+            
+            ax.plot(range(1, len(errores) + 1), errores, marker='o', markersize=4, 
+                    color='#B83B6F', linewidth=2, label='Historial de Error (||∇f||)')
+            ax.axhline(y=tol, color='#611833', linestyle='--', alpha=0.8, linewidth=1.5, label=f'Tolerancia ({tol})')
+            
+            ax.set_yscale('log')
+            ax.grid(True, which="both", linestyle=":", alpha=0.5, color='#B83B6F')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#2E111D')
+            ax.spines['bottom'].set_color('#2E111D')
+            ax.tick_params(colors='#2E111D', labelsize=9)
+            
+            ax.set_xlabel("Iteraciones Realizadas", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
+            ax.set_ylabel("Magnitud del Error (Escala Log)", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
+            ax.set_title("Trayectoria de Descenso hacia el Óptimo", fontsize=11, fontweight='bold', color='#2E111D', pad=12)
+            ax.legend(frameon=False, loc='upper right', fontsize=9, labelcolor='#2E111D')
+            
+            fig.tight_layout()
+            _, col_plot, _ = st.columns([1, 4, 1])
+            with col_plot:
+                st.pyplot(fig)
+
+        with tab2:
+            st.subheader("Modelamiento Analítico Desarrollado por SymPy")
+            col_sym1, col_sym2 = st.columns(2)
+            with col_sym1:
+                st.markdown("#### Vector Gradiente Analítico ($\\nabla f$)")
+                st.latex(sp.latex(grad_expr))
+            with col_sym2:
+                st.markdown("#### Matriz Hessiana Simbólica ($H$)")
+                st.latex(sp.latex(sp.Matrix(hessian_expr)))
+
+        with tab3:
+            st.subheader("Bitácora Detallada de Optimización Numérica")
+            st.dataframe(tabla_pasos, use_container_width=True)
 
 else:
     st.info("Modifica las variables en el panel izquierdo y haz clic en **'Ejecutar Optimización'**.")
