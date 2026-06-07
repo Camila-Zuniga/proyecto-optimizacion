@@ -98,6 +98,11 @@ if st.sidebar.button("Ejecutar Optimización"):
         st.metric(label="Valor de la función objetivo f(x*)", value=f"{f_min:.6f}")
         st.metric(label="Número de iteraciones realizadas", value=iters)
         st.metric(label="Criterio de parada / Error final", value=f"{err_final:.2e} ({criterio})")
+        st.subheader("📐 Modelamiento Simbólico (Valor Agregado)")
+        st.write("**Gradiente analítico calculado $\\nabla f$:**")
+        st.latex(sp.latex(grad_expr))
+        st.write("**Matriz Hessiana analítica $H$:**")
+        st.latex(sp.latex(sp.Matrix(hessian_expr)))
         
     with col2:
         fig, ax = plt.subplots()
