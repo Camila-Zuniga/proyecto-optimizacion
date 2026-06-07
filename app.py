@@ -51,6 +51,7 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
     x = x0.copy()
     historial_error = []
     historial_tabla = []
+    historial_x = [x0.copy()]
     iteraciones = 0
     criterio = "Máximo de iteraciones alcanzado"
     d = -grad(x)
@@ -73,7 +74,7 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
         if metodo == "Gradiente":
             d = -g
         elif metodo == "Gradiente Conjugado" and k > 0:
-            g_anterior = grad(historial_x[-1])
+            g_anterior = grad(historial_x[-2])
             beta = np.dot(g, g) / (np.dot(g_anterior, g_anterior) + 1e-10)
             d = -g + beta * d
         elif metodo == "Newton":
@@ -87,15 +88,15 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
         res_wolfe = line_search(f, grad, x, d, c1=c1, c2=c2)
         alpha = res_wolfe[0] if res_wolfe[0] is not None else 0.01
         
-        historial_x = [x.copy()]
-        x = x + alpha * d
+        x = x + alpha * d 
+        historial_x.append(x.copy())
         iteraciones += 1
         
-    return x, f(x), iteraciones, error_actual, criterio, historial_error
+    return x, f(x), iteraciones, error_actual, criterio, historial_error, historial_tabla
 
 # --- RENDERIZADO DE RESULTADOS ---
 if st.sidebar.button("Ejecutar Optimización"):
-    x_min, f_min, iters, err_final, criterio, errores = optimizar(metodo, x0, max_iter, tol, c1, c2)
+    x_min, f_min, iters, err_final, criterio, errores, tablas_pasos = optimizar(metodo, x0, max_iter, tol, c1, c2)
     
     st.header("📊 Resultados del Método")
     col1, col2 = st.columns(2)
@@ -132,7 +133,7 @@ if st.sidebar.button("Ejecutar Optimización"):
         st.latex(sp.latex(sp.Matrix(hessian_expr)))
 
     st.subheader("📋 Historial Completo Paso a Paso")
-    st.dataframe(historial_tabla, use_container_width=True)
+    st.dataframe(tabla_pasos, use_container_width=True)
 
 else:
     st.info("Configura los parámetros en el panel izquierdo (puedes subir el número de variables a 10 o más) y presiona 'Ejecutar Optimización'.")
