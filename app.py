@@ -21,7 +21,7 @@ with st.sidebar.expander("1. Variables y Función Objetivo", expanded=True):
 
 with st.sidebar.expander("2. Algoritmo de Optimización", expanded=True):
     # AGREGADO: Checkbox opcional para activar la comparativa
-    modo_comparativo = st.checkbox("🔬 Habilitar Modo Comparativo", value=False)
+    modo_comparativo = st.checkbox("Habilitar Modo Comparativo", value=False)
     
     if not modo_comparativo:
         metodo = st.selectbox("Método a ejecutar", ["Gradiente", "Gradiente Conjugado", "Newton"])
