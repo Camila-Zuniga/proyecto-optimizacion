@@ -12,7 +12,7 @@ st.caption("Proyecto Final - Métodos de Optimización")
 # --- PANEL DE ENTRADAS ---
 st.sidebar.header("Datos de Entrada")
 
-num_vars = st.sidebar.number_input("Número de variables", min_value=1, max_value=5, value=2)
+num_vars = st.sidebar.number_input("Número de variables", min_value=1, max_value=20, value=2)
 vars_symbols = sp.symbols(f'x1:{num_vars+1}')
 st.sidebar.info(f"Variables habilitadas: {', '.join([str(v) for v in vars_symbols])}")
 
@@ -50,6 +50,7 @@ except Exception as e:
 def optimizar(metodo, x0, max_iter, tol, c1, c2):
     x = x0.copy()
     historial_error = []
+    historial_tabla = []
     iteraciones = 0
     criterio = "Máximo de iteraciones alcanzado"
     d = -grad(x)
@@ -58,6 +59,12 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
         g = grad(x)
         error_actual = np.linalg.norm(g)
         historial_error.append(error_actual)
+        historial_tabla.append({
+            "Iteración": k + 1, 
+            "Punto Actual (x)": str(np.round(x, 4)), 
+            "f(x)": f(x), 
+            "||∇f|| (Error)": error_actual
+        })
         
         if error_actual < tol:
             criterio = f"Convergencia alcanzada (||∇f|| < {tol})"
@@ -113,3 +120,24 @@ if st.sidebar.button("Ejecutar Optimización"):
         ax.set_title("Gráfico de Convergencia")
         ax.grid(True, which="both", linestyle="--")
         st.pyplot(fig)
+
+    # --- SECCIÓN DE VALOR AGREGADO ---
+    st.markdown("---")
+    st.header("✨ Sevé de Valor Agregado (Análisis Avanzado)")
+    
+    v_col1, v_col2 = st.columns(2)
+    with v_col1:
+        st.subheader("📐 Modelamiento Simbólico Analítico")
+        st.write("**Gradiente analítico calculado $\\nabla f$:**")
+        st.latex(sp.latex(grad_expr))
+    
+    with v_col2:
+        st.subheader("🧮 Matriz Hessiana Analítica")
+        st.write("**Matriz Hessiana $H$:**")
+        st.latex(sp.latex(sp.Matrix(hessian_expr)))
+
+    st.subheader("📋 Historial Completo Paso a Paso")
+    st.dataframe(tabla_pasos, use_container_width=True)
+
+else:
+    st.info("Configura los parámetros en el panel izquierdo (puedes subir el número de variables a 10 o más) y presiona 'Ejecutar Optimización'.")
