@@ -1,7 +1,4 @@
-7. Haz clic en el botón verde **"Commit changes..."** en la esquina superior derecha y luego confirma en el botón verde que aparece.
-8. Vuelve a hacer clic en **"Add file"** ➡️ **"Create new file"**.
-9. En el nombre del archivo escribe exactamente: `app.py`
-10. En el cuadro de texto, pega el **código completo de la aplicación** que te proporciono a continuación (diseñado específicamente para cumplir los requisitos del **"proyecto de métodos de Optimización .pdf"**):
+
 
 ```python
 import streamlit as st
