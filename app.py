@@ -105,11 +105,7 @@ if st.sidebar.button("Ejecutar Optimización"):
         st.metric(label="Valor de la función objetivo f(x*)", value=f"{f_min:.6f}")
         st.metric(label="Número de iteraciones realizadas", value=iters)
         st.metric(label="Criterio de parada / Error final", value=f"{err_final:.2e} ({criterio})")
-        st.subheader("📐 Modelamiento Simbólico (Valor Agregado)")
-        st.write("**Gradiente analítico calculado $\\nabla f$:**")
-        st.latex(sp.latex(grad_expr))
-        st.write("**Matriz Hessiana analítica $H$:**")
-        st.latex(sp.latex(sp.Matrix(hessian_expr)))
+    
         
     with col2:
         fig, ax = plt.subplots()
@@ -123,11 +119,10 @@ if st.sidebar.button("Ejecutar Optimización"):
 
     # --- SECCIÓN DE VALOR AGREGADO ---
     st.markdown("---")
-    st.header("✨ Sevé de Valor Agregado (Análisis Avanzado)")
     
     v_col1, v_col2 = st.columns(2)
     with v_col1:
-        st.subheader("📐 Modelamiento Simbólico Analítico")
+        st.subheader("📐 Modelamiento Simbólico Analítico (Valor Agregado)")
         st.write("**Gradiente analítico calculado $\\nabla f$:**")
         st.latex(sp.latex(grad_expr))
     
@@ -137,7 +132,7 @@ if st.sidebar.button("Ejecutar Optimización"):
         st.latex(sp.latex(sp.Matrix(hessian_expr)))
 
     st.subheader("📋 Historial Completo Paso a Paso")
-    st.dataframe(tabla_pasos, use_container_width=True)
+    st.dataframe(historial_tabla, use_container_width=True)
 
 else:
     st.info("Configura los parámetros en el panel izquierdo (puedes subir el número de variables a 10 o más) y presiona 'Ejecutar Optimización'.")
