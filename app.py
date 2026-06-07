@@ -33,7 +33,7 @@ from sympy.parsing.sympy_parser import parse_expr, standard_transformations, imp
 
 try:
     # Creamos un filtro para que entienda operaciones implícitas (ej: 2(x) -> 2*x) y potencias con ^
-    transformaciones = standard_transformations + (implicit_multiplication_application, convert_xor)
+    transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
     
     # Procesamos la cadena de texto con el filtro inteligente
     f_expr = parse_expr(func_str, transformations=transformations)
