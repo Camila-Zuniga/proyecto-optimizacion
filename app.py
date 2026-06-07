@@ -28,16 +28,15 @@ c1 = st.sidebar.number_input("c1 (Armijo)", min_value=1e-4, max_value=0.3, value
 c2 = st.sidebar.number_input("c2 (Curvatura)", min_value=0.1, max_value=0.9, value=0.9, format="%.2f")
 
 # --- PROCESAMIENTO MATEMÁTICO ---
-# Importamos herramientas avanzadas de parseo
-from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
-
 try:
-    # Creamos un filtro para que entienda operaciones implícitas (ej: 2(x) -> 2*x) y potencias con ^
+    # Filtro para entender operaciones implícitas y potencias con ^
     transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
     
-    # Procesamos la cadena de texto con el filtro inteligente
-    f_expr = parse_expr(func_str, transformations=transformations)
+    # ¡LA SOLUCIÓN! Registramos las variables reales para que no rompa "x1" en "x * 1"
+    local_dict = {str(s): s for s in vars_symbols}
     
+    # Pasamos el local_dict al lector de expresiones
+    f_expr = parse_expr(func_str, transformations=transformations, local_dict=local_dict)
     grad_expr = [sp.diff(f_expr, v) for v in vars_symbols]
     hessian_expr = [[sp.diff(g, v) for v in vars_symbols] for g in grad_expr]
 
@@ -53,6 +52,7 @@ try:
 except Exception as e:
     st.error(f"Error en la entrada matemática: {e}")
     st.stop()
+
 
 
 # --- ALGORITMO ---
