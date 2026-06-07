@@ -13,26 +13,23 @@ st.caption("Proyecto Final — Métodos de Optimización")
 # --- PANEL DE ENTRADAS ORDENADO (SIDEBAR) ---
 st.sidebar.header("Configuración del Sistema")
 
-# Grupo 1: Configuración de Variables y Función
 with st.sidebar.expander("1. Variables y Función Objetivo", expanded=True):
     num_vars = st.number_input("Número de variables", min_value=1, max_value=20, value=2)
     vars_symbols = sp.symbols(f'x1:{num_vars+1}')
     st.info(f"Variables habilitadas: {', '.join([str(v) for v in vars_symbols])}")
     func_str = st.text_input("Función objetivo", value="x1**2 + 2*x2**2")
 
-# Grupo 2: Configuración del Algoritmo
 with st.sidebar.expander("2. Algoritmo de Optimización", expanded=True):
     metodo = st.selectbox("Método a ejecutar", ["Gradiente", "Gradiente Conjugado", "Newton"])
     start_str = st.text_input("Punto de partida (separado por comas)", value=", ".join(["1.0"] * num_vars))
     max_iter = st.number_input("Iteraciones máximas", min_value=1, max_value=1000, value=100)
     tol = st.number_input("Tolerancia (𝜖)", min_value=1e-7, max_value=1e-1, value=1e-5, format="%.7f")
 
-# Grupo 3: Parámetros Avanzados de Wolfe
 with st.sidebar.expander("3. Condiciones de Búsqueda de Línea (Wolfe)", expanded=False):
     c1 = st.number_input("c1 (Armijo)", min_value=1e-4, max_value=0.3, value=1e-4, format="%.4f")
     c2 = st.number_input("c2 (Curvatura)", min_value=0.1, max_value=0.9, value=0.9, format="%.2f")
 
-# --- PROCESAMIENTO MATEMÁTICO CONTRA ERRORES ---
+# --- PROCESAMIENTO MATEMÁTICO ---
 try:
     transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
     local_dict = {str(s): s for s in vars_symbols}
@@ -137,14 +134,13 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
         
     return x, f(x), iteraciones, error_actual, criterio, historial_error, historial_tabla
 
-# --- RENDERIZADO VISUAL MEJORADO ---
+# --- RENDERIZADO VISUAL CON NUEVA PALETA ---
 if st.sidebar.button("Ejecutar Optimización", use_container_width=True):
     x_min, f_min, iters, err_final, criterio, errores, tabla_pasos = optimizar(metodo, x0, max_iter, tol, c1, c2)
     
-    # Creación de pestañas modernas
     tab1, tab2, tab3 = st.tabs(["Resumen y Convergencia", "Análisis Simbólico", "Historial Paso a Paso"])
     
-    # --- PESTAÑA 1: CORE DE RESULTADOS Y GRÁFICO ESTILIZADO ---
+    # --- PESTAÑA 1: RESULTADOS Y GRÁFICO PERSONALIZADO ---
     with tab1:
         st.subheader("Análisis de Desempeño y Convergencia")
         
@@ -158,48 +154,48 @@ if st.sidebar.button("Ejecutar Optimización", use_container_width=True):
         with col_m4:
             st.metric(label="Error Final (||∇f||)", value=f"{err_final:.2e}")
             
-        st.info(f"**Condición de Finalización:** {criterio}")
+        st.info(f"🏁 **Condición de Finalización:** {criterio}")
         st.markdown("---")
         
-        # Diseño estético del gráfico de Matplotlib
+        # DISEÑO DEL GRÁFICO ADAPTADO A LA PALETA
         fig, ax = plt.subplots(figsize=(7, 3.8))
+        fig.patch.set_facecolor('#FFFDFE') # Fondo del lienzo exterior
+        ax.set_facecolor('#FFFDFE')       # Fondo del área del gráfico
         
-        # Línea de error (Azul moderno de alta intensidad con marcadores limpios)
+        # Línea de error (Color frambuesa acento: #B83B6F)
         ax.plot(range(1, len(errores) + 1), errores, marker='o', markersize=4, 
-                color='#1E88E5', linewidth=2, label='Historial de Error (||∇f||)')
+                color='#B83B6F', linewidth=2, label='Historial de Error (||∇f||)')
         
-        # Línea de referencia horizontal de Tolerancia (Rojo sutil punteado)
-        ax.axhline(y=tol, color='#E53935', linestyle='--', alpha=0.7, 
-                   linewidth=1.5, label=f'Tolerancia Estipulada ({tol})')
+        # Línea de Tolerancia (Color ciruela profundo: #611833)
+        ax.axhline(y=tol, color='#611833', linestyle='--', alpha=0.8, 
+                   linewidth=1.5, label=f'Tolerancia ({tol})')
         
-        # Ajustes de escala y rejilla minimalista
+        # Ajustes de grilla y escala
         ax.set_yscale('log')
-        ax.grid(True, which="both", linestyle=":", alpha=0.4, color='#999999')
+        ax.grid(True, which="both", linestyle=":", alpha=0.5, color='#B83B6F')
         
-        # Eliminar bordes (Spines) superior y derecho para un look limpio y actual
+        # Limpieza de bordes aplicando color de texto oscuro (#2E111D)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_color('#cccccc')
-        ax.spines['bottom'].set_color('#cccccc')
+        ax.spines['left'].set_color('#2E111D')
+        ax.spines['bottom'].set_color('#2E111D')
+        ax.tick_params(colors='#2E111D', labelsize=9)
         
-        # Etiquetas y tipografía organizada
-        ax.set_xlabel("Iteraciones Realizadas", fontsize=10, fontweight='bold', color='#2c3e50', labelpad=6)
-        ax.set_ylabel("Magnitud del Error (Escala Log)", fontsize=10, fontweight='bold', color='#2c3e50', labelpad=6)
-        ax.set_title("Trayectoria de Descenso hacia el Óptimo", fontsize=11, fontweight='bold', color='#1a252f', pad=12)
-        ax.legend(frameon=False, loc='upper right', fontsize=9)
+        # Títulos y etiquetas tipográficas
+        ax.set_xlabel("Iteraciones Realizadas", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
+        ax.set_ylabel("Magnitud del Error (Escala Log)", fontsize=10, fontweight='bold', color='#2E111D', labelpad=6)
+        ax.set_title("Trayectoria de Descenso hacia el Óptimo", fontsize=11, fontweight='bold', color='#2E111D', pad=12)
+        ax.legend(frameon=False, loc='upper right', fontsize=9, labelcolor='#2E111D')
         
-        # Ajuste de encuadre estricto
         fig.tight_layout()
         
-        # Despliegue centrado del gráfico
         _, col_plot, _ = st.columns([1, 4, 1])
         with col_plot:
             st.pyplot(fig)
 
     # --- PESTAÑA 2: VALOR AGREGADO MATEMÁTICO ---
     with tab2:
-        st.subheader("Modelamiento Analítico")
-        st.write("A continuación se exponen las estructuras algebraicas calculadas internamente de forma automática:")
+        st.subheader("Modelamiento Analítico Desarrollado por SymPy")
         
         col_sym1, col_sym2 = st.columns(2)
         with col_sym1:
@@ -213,8 +209,7 @@ if st.sidebar.button("Ejecutar Optimización", use_container_width=True):
     # --- PESTAÑA 3: DATA COMPLETA ---
     with tab3:
         st.subheader("Bitácora Detallada de Optimización Numérica")
-        st.write("Valores registrados cuadro por cuadro en cada salto del algoritmo:")
         st.dataframe(tabla_pasos, use_container_width=True)
 
 else:
-    st.info("Modifica las variables en el panel izquierdo y haz clic en **'Ejecutar Optimización'** para generar el reporte analítico.")
+    st.info("Modifica las variables en el panel izquierdo y haz clic en **'Ejecutar Optimización'**.")
