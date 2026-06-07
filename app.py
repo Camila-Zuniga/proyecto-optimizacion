@@ -7,28 +7,28 @@ from sympy.parsing.sympy_parser import parse_expr, standard_transformations, imp
 
 # Configuración visual de la página web
 st.set_page_config(page_title="OptiWeb - Métodos de Optimización", layout="wide")
-st.title("🧮 Aplicación Web de Optimización Numérica")
+st.title("Aplicación Web de Optimización Numérica")
 st.caption("Proyecto Final — Métodos de Optimización")
 
 # --- PANEL DE ENTRADAS ORDENADO (SIDEBAR) ---
-st.sidebar.header("⚙️ Configuración del Sistema")
+st.sidebar.header("Configuración del Sistema")
 
 # Grupo 1: Configuración de Variables y Función
-with st.sidebar.expander("📌 1. Variables y Función Objetivo", expanded=True):
+with st.sidebar.expander("1. Variables y Función Objetivo", expanded=True):
     num_vars = st.number_input("Número de variables", min_value=1, max_value=20, value=2)
     vars_symbols = sp.symbols(f'x1:{num_vars+1}')
     st.info(f"Variables habilitadas: {', '.join([str(v) for v in vars_symbols])}")
     func_str = st.text_input("Función objetivo", value="x1**2 + 2*x2**2")
 
 # Grupo 2: Configuración del Algoritmo
-with st.sidebar.expander("🚀 2. Algoritmo de Optimización", expanded=True):
+with st.sidebar.expander("2. Algoritmo de Optimización", expanded=True):
     metodo = st.selectbox("Método a ejecutar", ["Gradiente", "Gradiente Conjugado", "Newton"])
     start_str = st.text_input("Punto de partida (separado por comas)", value=", ".join(["1.0"] * num_vars))
     max_iter = st.number_input("Iteraciones máximas", min_value=1, max_value=1000, value=100)
     tol = st.number_input("Tolerancia (𝜖)", min_value=1e-7, max_value=1e-1, value=1e-5, format="%.7f")
 
 # Grupo 3: Parámetros Avanzados de Wolfe
-with st.sidebar.expander("🔍 3. Condiciones de Búsqueda de Línea (Wolfe)", expanded=False):
+with st.sidebar.expander("3. Condiciones de Búsqueda de Línea (Wolfe)", expanded=False):
     c1 = st.number_input("c1 (Armijo)", min_value=1e-4, max_value=0.3, value=1e-4, format="%.4f")
     c2 = st.number_input("c2 (Curvatura)", min_value=0.1, max_value=0.9, value=0.9, format="%.2f")
 
@@ -40,14 +40,14 @@ try:
     try:
         f_expr = parse_expr(func_str, transformations=transformations, local_dict=local_dict)
     except Exception:
-        st.error("⚠️ **Error en la función objetivo:** Expresión matemática inválida o con errores de sintaxis.")
+        st.error("**Error en la función objetivo:** Expresión matemática inválida o con errores de sintaxis.")
         st.stop()
         
     try:
         grad_expr = [sp.diff(f_expr, v) for v in vars_symbols]
         hessian_expr = [[sp.diff(g, v) for v in vars_symbols] for g in grad_expr]
     except Exception:
-        st.error("⚠️ **Error de diferenciación:** No se pudieron computar las derivadas simbólicas de este modelo.")
+        st.error("**Error de diferenciación:** No se pudieron computar las derivadas simbólicas de este modelo.")
         st.stop()
 
     f_num = sp.lambdify(vars_symbols, f_expr, 'numpy')
@@ -61,11 +61,11 @@ try:
     try:
         x0 = np.array([float(x.strip()) for x in start_str.split(",")], dtype=float)
     except Exception:
-        st.error("⚠️ **Error en punto de partida:** Utiliza únicamente números separados por comas.")
+        st.error("**Error en punto de partida:** Utiliza únicamente números separados por comas.")
         st.stop()
         
     if len(x0) != num_vars:
-        st.error(f"⚠️ **Inconsistencia de dimensiones:** Definiste {num_vars} variables pero ingresaste {len(x0)} coordenadas iniciales.")
+        st.error(f"**Inconsistencia de dimensiones:** Definiste {num_vars} variables pero ingresaste {len(x0)} coordenadas iniciales.")
         st.stop()
         
 except Exception as e:
@@ -138,11 +138,11 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
     return x, f(x), iteraciones, error_actual, criterio, historial_error, historial_tabla
 
 # --- RENDERIZADO VISUAL MEJORADO ---
-if st.sidebar.button("▶️ Ejecutar Optimización", use_container_width=True):
+if st.sidebar.button("Ejecutar Optimización", use_container_width=True):
     x_min, f_min, iters, err_final, criterio, errores, tabla_pasos = optimizar(metodo, x0, max_iter, tol, c1, c2)
     
     # Creación de pestañas modernas
-    tab1, tab2, tab3 = st.tabs(["🎯 Resumen y Convergencia", "📐 Análisis Simbólico", "📋 Historial Paso a Paso"])
+    tab1, tab2, tab3 = st.tabs(["Resumen y Convergencia", "Análisis Simbólico", "Historial Paso a Paso"])
     
     # --- PESTAÑA 1: CORE DE RESULTADOS Y GRÁFICO ESTILIZADO ---
     with tab1:
@@ -158,7 +158,7 @@ if st.sidebar.button("▶️ Ejecutar Optimización", use_container_width=True):
         with col_m4:
             st.metric(label="Error Final (||∇f||)", value=f"{err_final:.2e}")
             
-        st.info(f"🏁 **Condición de Finalización:** {criterio}")
+        st.info(f"**Condición de Finalización:** {criterio}")
         st.markdown("---")
         
         # Diseño estético del gráfico de Matplotlib
@@ -198,16 +198,16 @@ if st.sidebar.button("▶️ Ejecutar Optimización", use_container_width=True):
 
     # --- PESTAÑA 2: VALOR AGREGADO MATEMÁTICO ---
     with tab2:
-        st.subheader("Modelamiento Analítico Desarrollado por SymPy")
+        st.subheader("Modelamiento Analítico")
         st.write("A continuación se exponen las estructuras algebraicas calculadas internamente de forma automática:")
         
         col_sym1, col_sym2 = st.columns(2)
         with col_sym1:
-            st.markdown("#### 📐 Vector Gradiente Analítico ($\\nabla f$)")
+            st.markdown("#### Vector Gradiente Analítico ($\\nabla f$)")
             st.latex(sp.latex(grad_expr))
             
         with col_sym2:
-            st.markdown("#### 🧮 Matriz Hessiana Simbólica ($H$)")
+            st.markdown("#### Matriz Hessiana Simbólica ($H$)")
             st.latex(sp.latex(sp.Matrix(hessian_expr)))
 
     # --- PESTAÑA 3: DATA COMPLETA ---
@@ -217,4 +217,4 @@ if st.sidebar.button("▶️ Ejecutar Optimización", use_container_width=True):
         st.dataframe(tabla_pasos, use_container_width=True)
 
 else:
-    st.info("💡 Modifica las variables en el panel izquierdo y haz clic en **'Ejecutar Optimización'** para generar el reporte analítico.")
+    st.info("Modifica las variables en el panel izquierdo y haz clic en **'Ejecutar Optimización'** para generar el reporte analítico.")
