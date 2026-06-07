@@ -96,7 +96,7 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
 
 # --- RENDERIZADO DE RESULTADOS ---
 if st.sidebar.button("Ejecutar Optimización"):
-    x_min, f_min, iters, err_final, criterio, errores, tablas_pasos = optimizar(metodo, x0, max_iter, tol, c1, c2)
+    x_min, f_min, iters, err_final, criterio, errores, tabla_pasos = optimizar(metodo, x0, max_iter, tol, c1, c2)
     
     st.header("📊 Resultados del Método")
     col1, col2 = st.columns(2)
