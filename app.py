@@ -3,6 +3,7 @@ import numpy as np
 import sympy as sp
 import matplotlib.pyplot as plt
 from scipy.optimize import line_search
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application, convert_xor
 
 # Configuración visual
 st.set_page_config(page_title="OptiWeb - Métodos de Optimización", layout="wide")
@@ -29,13 +30,11 @@ c2 = st.sidebar.number_input("c2 (Curvatura)", min_value=0.1, max_value=0.9, val
 
 # --- PROCESAMIENTO MATEMÁTICO ---
 try:
-    # Filtro para entender operaciones implícitas y potencias con ^
     transformations = standard_transformations + (implicit_multiplication_application, convert_xor)
     
-    # ¡LA SOLUCIÓN! Registramos las variables reales para que no rompa "x1" en "x * 1"
+    # Diccionario de resguardo para proteger variables con numeración (x1, x2...)
     local_dict = {str(s): s for s in vars_symbols}
     
-    # Pasamos el local_dict al lector de expresiones
     f_expr = parse_expr(func_str, transformations=transformations, local_dict=local_dict)
     grad_expr = [sp.diff(f_expr, v) for v in vars_symbols]
     hessian_expr = [[sp.diff(g, v) for v in vars_symbols] for g in grad_expr]
@@ -52,8 +51,6 @@ try:
 except Exception as e:
     st.error(f"Error en la entrada matemática: {e}")
     st.stop()
-
-
 
 # --- ALGORITMO ---
 def optimizar(metodo, x0, max_iter, tol, c1, c2):
@@ -93,7 +90,6 @@ def optimizar(metodo, x0, max_iter, tol, c1, c2):
             except np.linalg.LinAlgError:
                 d = -g
         
-        # Búsqueda de línea bajo condiciones de Wolfe
         res_wolfe = line_search(f, grad, x, d, c1=c1, c2=c2)
         alpha = res_wolfe[0] if res_wolfe[0] is not None else 0.01
         
@@ -116,7 +112,6 @@ if st.sidebar.button("Ejecutar Optimización"):
         st.metric(label="Número de iteraciones realizadas", value=iters)
         st.metric(label="Criterio de parada / Error final", value=f"{err_final:.2e} ({criterio})")
     
-        
     with col2:
         fig, ax = plt.subplots()
         ax.plot(range(1, len(errores) + 1), errores, marker='o', color='#FF4B4B')
@@ -127,12 +122,11 @@ if st.sidebar.button("Ejecutar Optimización"):
         ax.grid(True, which="both", linestyle="--")
         st.pyplot(fig)
 
-    # --- SECCIÓN DE VALOR AGREGADO ---
     st.markdown("---")
     
     v_col1, v_col2 = st.columns(2)
     with v_col1:
-        st.subheader("📐 Modelamiento Simbólico Analítico (Valor Agregado)")
+        st.subheader("📐 Modelamiento Simbólico Analítico")
         st.write("**Gradiente analítico calculado $\\nabla f$:**")
         st.latex(sp.latex(grad_expr))
     
@@ -145,4 +139,5 @@ if st.sidebar.button("Ejecutar Optimización"):
     st.dataframe(tabla_pasos, use_container_width=True)
 
 else:
-    st.info("Configura los parámetros en el panel izquierdo (puedes subir el número de variables a 10 o más) y presiona 'Ejecutar Optimización'.")
+    st.info("Configura los parámetros en el panel izquierdo y presiona 'Ejecutar Optimización'.")
+
